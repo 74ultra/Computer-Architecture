@@ -8,6 +8,8 @@ class CPU:
 
     def __init__(self):
         self.reg = [0] * 8
+        self.sp = 7
+        self.reg[self.sp] = 0xf4  # 244
         self.ram = [0] * 256
         self.pc = 0
         self.running = False
@@ -49,7 +51,7 @@ class CPU:
         #     0b00000000,
         #     0b00000001,  # HLT
         # ]
-        print(program)
+        # print(program)
 
         for instruction in program:
             self.ram[address] = instruction
@@ -58,9 +60,27 @@ class CPU:
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
-        if op == "ADD":
+        # Addition
+        if op == 0b10100000:
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
+            self.pc += 3
+
+        # Subtraction
+        elif op == 0b10100001:
+            self.reg[reg_a] -= self.reg[reg_b]
+            self.pc += 3
+
+        # Multiply
+        elif op == 0b10100010:
+            self.reg[reg_a] *= self.reg[reg_b]
+            self.pc += 3
+
+        # Division
+        elif op == 0b10100011:
+            # self.reg[reg_a] = self.reg[reg_a] / self.reg[reg_b]
+            self.reg[reg_a] /= self.reg[reg_b]
+            self.pc += 3
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -99,10 +119,11 @@ class CPU:
         while self.running is True:
             IR = self.ram[self.pc]
             is_alu = IR >> 5 & 0b1
+            num_operands = IR >> 6
 
             # If an ALU op is detected, send to alu method
             if is_alu == 1:
-                print('found')
+                self.alu(IR, self.ram[self.pc + 1], self.ram[self.pc + 2])
 
             # LDI - sets a specified register to a specified value
             if IR == 0b10000010:
@@ -110,12 +131,6 @@ class CPU:
                 op_a = self.ram[self.pc + 1]
                 op_b = self.ram[self.pc + 2]
                 self.reg[op_a] = op_b
-                self.pc += 3
-
-            if IR == 0b10100010:
-                op_a = self.ram[self.pc + 1]
-                op_b = self.ram[self.pc + 2]
-                self.reg[op_a] *= self.reg[op_b]
                 self.pc += 3
 
             # PRN - that prints the numeric value stored in a register.
@@ -127,3 +142,29 @@ class CPU:
             # HLT - halt
             if IR == 0b00000001:
                 self.running = False
+
+            # PUSH
+            if IR == 0b01000101:
+                # get register address
+                given_register = self.ram[self.pc + 1]
+                # retrieve value in register
+                value_in_register = self.reg[given_register]
+                # decrement sp
+                self.reg[self.sp] -= 1
+                # write value in given register to RAM at the SP location
+                self.ram[self.reg[self.sp]] = value_in_register
+                # increment program counter
+                self.pc += 2
+
+            # POP
+            if IR == 0b01000110:
+                # get register address
+                given_register = self.ram[self.pc + 1]
+                # retrieve value from RAM
+                value_from_memory = self.ram[self.reg[self.sp]]
+                # write value to the given register
+                self.reg[given_register] = value_from_memory
+                # increment sp
+                self.reg[self.sp] += 1
+                # increment program counter
+                self.pc += 2
