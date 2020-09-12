@@ -13,6 +13,7 @@ class CPU:
         self.ram = [0] * 256
         self.pc = 0
         self.running = False
+        self.fl = 0b00000000
 
     def load(self):
         """Load a program into memory."""
@@ -77,8 +78,21 @@ class CPU:
 
         # Division
         elif op == 0b10100011:
+            if self.reg[reg_b] == 0:
+                print("You cannot divide by zero.")
+                sys.exit(1)
             # self.reg[reg_a] = self.reg[reg_a] / self.reg[reg_b]
             self.reg[reg_a] /= self.reg[reg_b]
+            self.pc += 3
+
+        # CMP
+        elif op == 0b10100111:
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.fl = 0b00000001
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.fl = 0b00000010
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.fl = 0b00000100
             self.pc += 3
 
         else:
@@ -120,6 +134,8 @@ class CPU:
             IR = self.ram[self.pc]
             is_alu = IR >> 5 & 0b1
             num_operands = IR >> 6
+
+            # print('R0', self.reg[0], 'R1', self.reg[1])
 
             # If an ALU op is detected, send to alu method
             if is_alu == 1:
@@ -168,3 +184,55 @@ class CPU:
                 self.reg[self.sp] += 1
                 # increment program counter
                 self.pc += 2
+
+            # CALL
+            if IR == 0b01010000:
+                # get the given register in the operand
+                given_register = self.ram[self.pc + 1]
+                # STORE THE RETURN ADDRESS (PC + 2) ONTO THE STACK
+                # decrement stack pointer
+                self.reg[self.sp] -= 1
+                # write return address to RAM
+                self.ram[self.reg[self.sp]] = self.pc + 2
+                # set PC to the value inside given register
+                self.pc = self.reg[given_register]
+
+            # RET
+            if IR == 0b00010001:
+                # set PC to the value at the top of the stack
+                self.pc = self.ram[self.reg[self.sp]]
+                # increment Stack Pointer
+                self.reg[self.sp] += 1
+
+            # JMP
+            if IR == 0b01010100:
+                # retrieve address from given register
+                given_register = self.ram[self.pc + 1]
+                self.pc = self.reg[given_register]
+
+            # JEQ
+            if IR == 0b01010101:
+                if self.fl & 0b1:
+                    given_register = self.ram[self.pc + 1]
+                    self.pc = self.reg[given_register]
+                else:
+                    self.pc += 2
+
+            # JNE
+            if IR == 0b01010110:
+                if self.fl & 0b1:
+                    self.pc += 2
+                else:
+                    given_register = self.ram[self.pc + 1]
+                    self.pc = self.reg[given_register]
+
+            # if IR == 0b01010110:
+            #     print('flag', self.fl)
+            #     if self.fl == 0b00000000:
+            #         print('The flag was equal')
+            #         given_register = self.ram[self.pc + 1]
+            #         print('given register')
+            #         self.pc = self.reg[given_register]
+            #     else:
+            #         print("The flag was not equal")
+            #         self.pc += 2
