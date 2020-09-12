@@ -41,19 +41,6 @@ class CPU:
             print(f'{sys.argv[1]} file not found')
             sys.exit(1)
 
-        # For now, we've just hardcoded a program:
-
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010,  # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111,  # PRN R0
-        #     0b00000000,
-        #     0b00000001,  # HLT
-        # ]
-        # print(program)
-
         for instruction in program:
             self.ram[address] = instruction
             address += 1
@@ -87,10 +74,13 @@ class CPU:
 
         # CMP
         elif op == 0b10100111:
+            #  'equal' condition - a == b
             if self.reg[reg_a] == self.reg[reg_b]:
                 self.fl = 0b00000001
+            # 'greater than' condition - a > b
             elif self.reg[reg_a] > self.reg[reg_b]:
                 self.fl = 0b00000010
+            # 'less than' condition - a < b
             elif self.reg[reg_a] < self.reg[reg_b]:
                 self.fl = 0b00000100
             self.pc += 3
@@ -208,10 +198,12 @@ class CPU:
             if IR == 0b01010100:
                 # retrieve address from given register
                 given_register = self.ram[self.pc + 1]
+                # set program counter to address in given register
                 self.pc = self.reg[given_register]
 
             # JEQ
             if IR == 0b01010101:
+                # If 'equal' flag is True, set program counter to address in given register
                 if self.fl & 0b1:
                     given_register = self.ram[self.pc + 1]
                     self.pc = self.reg[given_register]
@@ -220,19 +212,9 @@ class CPU:
 
             # JNE
             if IR == 0b01010110:
+                # If 'equal' flaf is False, set program counter to address in given register
                 if self.fl & 0b1:
                     self.pc += 2
                 else:
                     given_register = self.ram[self.pc + 1]
                     self.pc = self.reg[given_register]
-
-            # if IR == 0b01010110:
-            #     print('flag', self.fl)
-            #     if self.fl == 0b00000000:
-            #         print('The flag was equal')
-            #         given_register = self.ram[self.pc + 1]
-            #         print('given register')
-            #         self.pc = self.reg[given_register]
-            #     else:
-            #         print("The flag was not equal")
-            #         self.pc += 2
