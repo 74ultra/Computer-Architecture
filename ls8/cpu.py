@@ -123,9 +123,6 @@ class CPU:
         while self.running is True:
             IR = self.ram[self.pc]
             is_alu = IR >> 5 & 0b1
-            num_operands = IR >> 6
-
-            # print('R0', self.reg[0], 'R1', self.reg[1])
 
             # If an ALU op is detected, send to alu method
             if is_alu == 1:
