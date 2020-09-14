@@ -72,6 +72,58 @@ class CPU:
             self.reg[reg_a] /= self.reg[reg_b]
             self.pc += 3
 
+        # AND
+        elif op == 0b10101000:
+            op_a = self.reg[reg_a]
+            op_b = self.reg[reg_b]
+            self.reg[reg_a] = op_a & op_b
+            self.pc += 3
+
+        # OR
+        elif op == 0b10101010:
+            op_a = self.reg[reg_a]
+            op_b = self.reg[reg_b]
+            self.reg[reg_a] = op_a | op_b
+            self.pc += 3
+
+        # XOR
+        elif op == 0b10101011:
+            op_a = self.reg[reg_a]
+            op_b = self.reg[reg_b]
+            self.reg[reg_a] = op_a ^ op_b
+            self.pc += 3
+
+        # NOT
+        elif op == 0b01101001:
+            op_a = self.reg[reg_a]
+            self.reg[reg_a] = ~op_a
+            self.pc += 2
+
+        # SHL
+        elif op == 0b10101100:
+            op_a = self.reg[reg_a]
+            op_b = self.reg[reg_b]
+            self.reg[reg_a] = op_a << op_b
+            self.pc += 3
+
+        # SHR
+        elif op == 0b10101101:
+            op_a = self.reg[reg_a]
+            op_b = self.reg[reg_b]
+            self.reg[reg_a] = op_a >> op_b
+            self.pc += 3
+
+        # MOD
+        elif op == 0b10100100:
+            op_a = self.reg[reg_a]
+            op_b = self.reg[reg_b]
+            if op_b == 0:
+                print('You cannot divide by zero.')
+                sys.exit(1)
+            else:
+                self.reg[reg_a] = op_a % op_b
+                self.pc += 3
+
         # CMP
         elif op == 0b10100111:
             #  'equal' condition - a == b
